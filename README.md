@@ -22,5 +22,10 @@ export (cat .env| xargs)
 3. create docker instance of rabbitmq
 ```shell
 docker run -d -p 15672:15672 -p 5672:5672 \
---env-file .env rabbitmq:3.8.14-management-alpine
+  --name aio-pika-rabbit --hostname aio-pika-rabbit \
+  --env-file .env rabbitmq:3.8.14-management-alpine
+```
+4. install packages from `requirements.txt`
+```shell
+pip install -r requirements.txt
 ```
