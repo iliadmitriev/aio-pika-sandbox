@@ -1,6 +1,6 @@
 from aiohttp import web
 import asyncio
-from aio_pika import connect_robust, Message, DeliveryMode
+from aio_pika import connect_robust, Message, DeliveryMode, ExchangeType
 
 
 async def init_pika(app):
@@ -9,14 +9,24 @@ async def init_pika(app):
     connection = await connect_robust(
         url=rmq_url, loop=loop
     )
+    channel = await create_channel(connection)
     app['rmq']['connection'] = connection
-    app['rmq']['channel'] = await create_channel(connection)
+    app['rmq']['channel'] = channel
+    app['rmq']['exchange'] = await create_exchange(channel)
 
 
 async def create_channel(connection):
     channel = await connection.channel()
-    queue = await channel.declare_queue("hello_queue", durable=True)
     return channel
+
+
+async def create_exchange(channel):
+    hello_exchange = await channel.declare_exchange(
+        'hello_exchange', ExchangeType.DIRECT, durable=True
+    )
+    queue = await channel.declare_queue("hello_queue", durable=True)
+    await queue.bind(hello_exchange, routing_key="hello_queue")
+    return hello_exchange
 
 
 async def close_pika(app):
@@ -33,8 +43,9 @@ def setup_pika(app, rmq_url):
 
 async def send_handler(request):
     message = {'message': 'Hello world'}
-    channel = request.app['rmq']['channel']
-    await channel.default_exchange.publish(
+    exchange = request.app['rmq']['exchange']
+
+    await exchange.publish(
         Message(b"Hello World!", delivery_mode=DeliveryMode.PERSISTENT),
         routing_key="hello_queue"
     )
