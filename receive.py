@@ -24,7 +24,7 @@ async def main(loop):
     channel = await connection.channel()
 
     # Declaring queue
-    queue = await channel.declare_queue("hello")
+    queue = await channel.declare_queue("hello_queue", durable=True)
 
     # Start listening the queue with name 'hello'
     await queue.consume(on_message, no_ack=True)
