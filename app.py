@@ -9,11 +9,13 @@ async def init_pika(app):
     connection = await connect(
         url=rmq_url, loop=loop
     )
-
-    # Creating a channel
-    channel = await connection.channel()
     app['connection'] = connection
-    app['channel'] = channel
+    app['channel'] = await create_channel(connection)
+
+
+async def create_channel(connection):
+    channel = await connection.channel()
+    return channel
 
 
 async def close_pika(app):
