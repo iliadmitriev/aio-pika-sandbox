@@ -1,12 +1,12 @@
 from aiohttp import web
 import asyncio
-from aio_pika import connect, Message, DeliveryMode
+from aio_pika import connect_robust, Message, DeliveryMode
 
 
 async def init_pika(app):
     loop = asyncio.get_event_loop()
     rmq_url = app['rmq']['url']
-    connection = await connect(
+    connection = await connect_robust(
         url=rmq_url, loop=loop
     )
     app['rmq']['connection'] = connection

@@ -1,5 +1,5 @@
 import asyncio
-from aio_pika import connect, IncomingMessage
+from aio_pika import connect_robust, IncomingMessage
 
 
 async def on_message(message: IncomingMessage):
@@ -16,7 +16,7 @@ async def on_message(message: IncomingMessage):
 
 async def main(loop):
     # Perform connection
-    connection = await connect(
+    connection = await connect_robust(
         "amqp://admin:adminsecret@192.168.10.1/hello", loop=loop
     )
 
