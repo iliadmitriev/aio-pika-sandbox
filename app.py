@@ -1,6 +1,11 @@
 from aiohttp import web
 import asyncio
 from aio_pika import connect_robust, Message, DeliveryMode, ExchangeType
+import aiohttp_jinja2
+import jinja2
+from pathlib import Path
+
+BASE_PATH = Path(__file__).resolve().parent
 
 
 async def init_pika(app):
@@ -41,15 +46,21 @@ def setup_pika(app, rmq_url):
     app.on_cleanup.append(close_pika)
 
 
+@aiohttp_jinja2.template('send.html')
 async def send_handler(request):
-    message = {'message': 'Hello world'}
-    exchange = request.app['rmq']['exchange']
+    if request.method == 'POST':
+        data = await request.post()
+        message_text = data['message']
+        exchange = request.app['rmq']['exchange']
 
-    await exchange.publish(
-        Message(b"Hello World!", delivery_mode=DeliveryMode.PERSISTENT),
-        routing_key="hello_queue"
-    )
-    return web.json_response(message)
+        await exchange.publish(
+            Message(message_text.encode(), delivery_mode=DeliveryMode.PERSISTENT),
+            routing_key="hello_queue"
+        )
+        response = {'done': 'success'}
+    else:
+        response = {'done': ''}
+    return response
 
 
 async def reload_handler(request):
@@ -65,8 +76,12 @@ async def init_app():
     app = web.Application()
     setup_pika(app, 'amqp://admin:adminsecret@192.168.10.1/hello')
     app.router.add_route('GET', '/send', send_handler)
+    app.router.add_route('POST', '/send', send_handler)
     app.router.add_route('GET', '/reload', reload_handler)
-
+    aiohttp_jinja2.setup(
+        app,
+        loader=jinja2.FileSystemLoader(BASE_PATH)
+    )
     return app
 
 
