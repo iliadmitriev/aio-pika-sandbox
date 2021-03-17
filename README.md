@@ -29,3 +29,12 @@ docker run -d -p 15672:15672 -p 5672:5672 \
 ```shell
 pip install -r requirements.txt
 ```
+5. run app server
+```shell
+python app.py
+```
+6. go to browser and open link send http://localhost:8080/send
+7. run receiver part `receive.py`
+```shell
+python receive.py
+```
